@@ -125,6 +125,22 @@ impl Grid {
     neighbours
   }
 
+  fn get_path(&self, closed_nodes: Vec<Node>, mut node: Node) -> Vec<Node> {
+    let mut path: Vec<Node> = vec![node];
+
+    while node.parent_index != -1 {
+      match closed_nodes.iter().find(|&n| n.index == node.parent_index) {
+        Some(parent) => node = *parent,
+        None => break,
+      }
+
+      path.push(node);
+    }
+
+    path.reverse();
+    path
+  }
+
   fn a_star(&self, mut start: Node, goal: Node) -> Vec<Node> {
     let mut open_nodes: Vec<Node> = vec![start];
     let mut closed_nodes: Vec<Node> = Vec::new();
@@ -149,43 +165,22 @@ impl Grid {
         if !closed_nodes.contains(neighbour) {
           neighbour.set_g_f(current_node, neighbour.parent_diagonal);
 
-          if open_nodes.contains(neighbour) {
-            let mut open_neighbour: Node = Node::new(neighbour.index, neighbour.x, neighbour.y);
-            for node in open_nodes.iter() {
-              if node == neighbour {
-                open_neighbour = *node;
+          match open_nodes.iter().find(|&n| n == neighbour) {
+            Some(node) => {
+              let mut open_neighbour: Node = *node;
+
+              if neighbour.g < open_neighbour.g {
+                open_neighbour.g = neighbour.g;
+                open_neighbour.parent_index = neighbour.parent_index;
               }
             }
-
-            if neighbour.g < open_neighbour.g {
-              open_neighbour.g = neighbour.g;
-              open_neighbour.parent_index = neighbour.parent_index;
-            }
-          } else {
-            open_nodes.push(*neighbour);
+            None => open_nodes.push(*neighbour),
           }
         }
       }
     }
 
     Vec::new()
-  }
-
-  fn get_path(&self, closed_nodes: Vec<Node>, mut node: Node) -> Vec<Node> {
-    let mut path: Vec<Node> = vec![node];
-
-    while node.parent_index != -1 {
-      for closed_node in closed_nodes.iter() {
-        if closed_node.index == node.parent_index {
-          node = *closed_node;
-        }
-      }
-
-      path.push(node);
-    }
-
-    path.reverse();
-    path
   }
 }
 
