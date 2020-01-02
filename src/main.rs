@@ -117,7 +117,7 @@ impl Grid {
         if x >= 0 && x < self.width && y >= 0 && y < self.height {
           let mut neighbour: Node = self.nodes[(y * self.width + x) as usize];
 
-          if node.traversable {
+          if neighbour.traversable {
             if pos % 2 == 0 {
               neighbour.parent_diagonal = true;
             }
