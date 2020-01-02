@@ -1,9 +1,13 @@
-const MOVE_COST: i32 = 10;
+use std::cmp;
+
+const MOVE_NORMAL_COST: i32 = 10;
+const MOVE_DIAGONAL_COST: i32 = 14;
 
 #[derive(Copy, Clone)]
 struct Node {
   index: i32,
   parent_index: i32,
+  parent_diagonal: bool,
   traversable: bool,
   x: i32,
   y: i32,
@@ -17,6 +21,7 @@ impl Node {
     Node {
       index: index,
       parent_index: -1,
+      parent_diagonal: false,
       traversable: true,
       x: x,
       y: y,
@@ -31,11 +36,19 @@ impl Node {
       return;
     }
 
-    self.h = ((self.x - goal.x).abs() + (self.y - goal.y).abs()) * MOVE_COST
+    let dx: i32 = (self.x - goal.x).abs();
+    let dy: i32 = (self.y - goal.y).abs();
+
+    self.h = MOVE_DIAGONAL_COST * cmp::max(dx, dy);
   }
 
-  fn set_g_f(&mut self, parent: Node) {
-    self.g = parent.g + MOVE_COST;
+  fn set_g_f(&mut self, parent: Node, diagonal: bool) {
+    self.g = parent.g
+      + if diagonal {
+        MOVE_DIAGONAL_COST
+      } else {
+        MOVE_NORMAL_COST
+      };
     self.f = self.g + self.h;
   }
 }
@@ -94,39 +107,24 @@ impl Grid {
   fn get_neighbours(&self, node: Node) -> Vec<Node> {
     let mut neighbours: Vec<Node> = Vec::new();
 
-    // left check
-    if node.x - 1 >= 0 {
-      let index = node.y * self.width + node.x - 1;
-      if self.nodes[index as usize].traversable {
-        neighbours.push(self.nodes[index as usize]);
+    for y in (node.y - 1)..=(node.y + 1) {
+      for x in (node.x - 1)..=(node.x + 1) {
+        if x == node.x && y == node.y {
+          continue;
+        }
+
+        println!("x: {} y: {}", x, y);
+
+        if x >= 0 && x < self.width && y >= 0 && y < self.height {
+          let index: usize = (y * self.width + x) as usize;
+          if self.nodes[index].traversable {
+            neighbours.push(self.nodes[index]);
+          }
+        }
       }
     }
 
-    // right check
-    if node.x + 1 < self.width {
-      let index = node.y * self.width + node.x + 1;
-      if self.nodes[index as usize].traversable {
-        neighbours.push(self.nodes[index as usize]);
-      }
-    }
-
-    // up check
-    if node.y - 1 >= 0 {
-      let index = (node.y - 1) * self.width + node.x;
-      if self.nodes[index as usize].traversable {
-        neighbours.push(self.nodes[index as usize]);
-      }
-    }
-
-    // down check
-    if node.y + 1 < self.height {
-      let index = (node.y + 1) * self.width + node.x;
-      if self.nodes[index as usize].traversable {
-        neighbours.push(self.nodes[index as usize]);
-      }
-    }
-
-    return neighbours;
+    neighbours
   }
 }
 
@@ -152,7 +150,7 @@ fn a_star(grid: Grid, mut start: Node, goal: Node) -> Vec<Node> {
       neighbour.parent_index = current_node.index;
 
       if !closed_nodes.contains(neighbour) {
-        neighbour.set_g_f(current_node);
+        neighbour.set_g_f(current_node, neighbour.parent_diagonal);
 
         if open_nodes.contains(neighbour) {
           let mut open_neighbour: Node = Node::new(neighbour.index, neighbour.x, neighbour.y);
