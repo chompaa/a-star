@@ -100,10 +100,6 @@ impl Grid {
     nodes
   }
 
-  fn get_width(&self) -> i32 {
-    self.width
-  }
-
   fn get_neighbours(&self, node: Node) -> Vec<Node> {
     let mut neighbours: Vec<Node> = Vec::new();
     let mut pos: u8 = 0;
@@ -193,13 +189,12 @@ impl Grid {
 }
 
 fn main() {
-  let grid: Grid = Grid::new(7, 7, vec![5, 10, 12, 17, 19, 26, 31, 38, 40, 45, 47]);
+  let grid: &mut Grid = &mut Grid::new(7, 7, vec![5, 10, 12, 17, 19, 26, 31, 38, 40, 45, 47]);
   let nodes = grid.get_nodes();
-  let width = grid.get_width();
   let path: Vec<Node> = grid.a_star(nodes[42], nodes[6]);
 
   let new_line = |x: i32| -> String {
-    if x == width - 1 {
+    if x == grid.width - 1 {
       String::from("\n")
     } else {
       String::new()
