@@ -106,6 +106,7 @@ impl Grid {
 
   fn get_neighbours(&self, node: Node) -> Vec<Node> {
     let mut neighbours: Vec<Node> = Vec::new();
+    let mut pos: u8 = 0;
 
     for y in (node.y - 1)..=(node.y + 1) {
       for x in (node.x - 1)..=(node.x + 1) {
@@ -115,10 +116,18 @@ impl Grid {
 
         if x >= 0 && x < self.width && y >= 0 && y < self.height {
           let index: usize = (y * self.width + x) as usize;
-          if self.nodes[index].traversable {
-            neighbours.push(self.nodes[index]);
+          let mut node: Node = self.nodes[index];
+
+          if node.traversable {
+            if pos % 2 == 0 {
+              node.parent_diagonal = true;
+            }
+
+            neighbours.push(node);
           }
         }
+
+        pos += 1;
       }
     }
 
@@ -190,7 +199,35 @@ fn main() {
   let width = grid.get_width();
   let path: Vec<Node> = grid.a_star(nodes[42], nodes[6]);
 
-  print!("Path: ");
+  let new_line = |x: i32| -> String {
+    if x == width - 1 {
+      String::from("\n")
+    } else {
+      String::new()
+    }
+  };
+
+  for node in nodes.iter() {
+    if path.first() == Some(node) {
+      print!("{:<3}{}", '\u{1F535}', new_line(node.x))
+    } else if path.last() == Some(node) {
+      print!("{:<3}{}", '\u{1F534}', new_line(node.x))
+    } else if node.traversable {
+      print!(
+        "{:<3}{}",
+        if path.contains(node) {
+          String::from("\u{26AA}")
+        } else {
+          node.index.to_string()
+        },
+        new_line(node.x)
+      );
+    } else {
+      print!("{:<3}{}", '\u{2B1B}', new_line(node.x));
+    }
+  }
+
+  print!("\nPath: ");
   for (index, node) in path.iter().enumerate() {
     if index == path.len() - 1 {
       print!("{}\n", node.index);
@@ -198,21 +235,6 @@ fn main() {
       print!("{} -> ", node.index);
     }
   }
-  println!("Cost: {}\n", path.len() * 10);
 
-  for node in nodes.iter() {
-    if node.traversable {
-      print!(
-        "{:<3}{}",
-        if path.contains(node) { '\u{25CF}' } else { '-' },
-        if node.x == width - 1 { "\n" } else { "" }
-      );
-    } else {
-      print!(
-        "{:<3}{}",
-        '\u{2588}',
-        if node.x == width - 1 { "\n" } else { "" }
-      );
-    }
-  }
+  println!("Cost: {}", path.last().unwrap().f);
 }
