@@ -113,8 +113,6 @@ impl Grid {
           continue;
         }
 
-        println!("x: {} y: {}", x, y);
-
         if x >= 0 && x < self.width && y >= 0 && y < self.height {
           let index: usize = (y * self.width + x) as usize;
           if self.nodes[index].traversable {
